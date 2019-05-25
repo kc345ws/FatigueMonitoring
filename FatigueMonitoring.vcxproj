@@ -133,11 +133,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="HaarDemo.cpp" />
+    <ClCompile Include="detect.cpp" />
+    <ClCompile Include="Fatigue.cpp" />
+    <ClCompile Include="histogram.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ostuThreshold.cpp" />
+    <ClCompile Include="Trans.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MyHead.h" />
+    <ClInclude Include="detect.h" />
+    <ClInclude Include="Fatigue.h" />
+    <ClInclude Include="histogram.h" />
+    <ClInclude Include="ostuThreshold.h" />
+    <ClInclude Include="Trans.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
