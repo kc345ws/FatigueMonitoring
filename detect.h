@@ -40,15 +40,23 @@ private:
 		CV_RGB(0, 0, 255),
 		CV_RGB(160, 32, 240)
 	};
+	int BlinkTims = 0;													//眨眼次数
+	int BowTimes = 0;													//低头次数
 
 public:
 	Detect();
-	void startDetect();//开始检测
-	bool checkisOpened();//检测摄像头是否打开
-	void detectFace();//检测脸部
-	void detectEyes(const int index);//检测眼睛
-	void showDetect();//显示检测图像
+	void startDetect();													//开始检测
+	bool checkisOpened();												//检测摄像头是否打开
+	void detectFace();													//检测脸部
+	void detectEyes(const int index);									//检测眼睛
+	void showDetect();													//显示检测图像
 	vector<Rect> getFaces() { return faces; }
 	VideoCapture getCap() { return cap; }
+	float getBlinkper(float time) { return BlinkTims / time; }			//获得眨眼频率
+	int getBlink() { return BlinkTims; }								//获得眨眼次数
+	void setBlink(int temp) { BlinkTims = temp; }
+	int getBow() { return BowTimes; }
+	float getBowper(float time) { return BowTimes / time; }				//获得低头评率
+	void setBow(int temp) { BowTimes = temp; }
 };
 #endif 

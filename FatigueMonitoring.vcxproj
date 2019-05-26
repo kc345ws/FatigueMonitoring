@@ -134,7 +134,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="detect.cpp" />
+    <ClCompile Include="eyePos.cpp" />
     <ClCompile Include="Fatigue.cpp" />
+    <ClCompile Include="Hist.cpp" />
     <ClCompile Include="histogram.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ostuThreshold.cpp" />
@@ -142,7 +144,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="detect.h" />
+    <ClInclude Include="eyePos.h" />
     <ClInclude Include="Fatigue.h" />
+    <ClInclude Include="Hist.h" />
     <ClInclude Include="histogram.h" />
     <ClInclude Include="ostuThreshold.h" />
     <ClInclude Include="Trans.h" />

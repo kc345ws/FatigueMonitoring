@@ -59,7 +59,7 @@ void Detect::detectEyes(const int index)
 	Mat faceROI = gray(faces[index]);
 	//vector<Rect>eyes;
 	eye_cascade.detectMultiScale(faceROI, eyes, 1.3, 3, 0);
-	cout << "检测到眼睛个数:" << eyes.size() << endl;
+	//cout << "检测到眼睛个数:" << eyes.size() << endl;
 	for (int j = 0; j < eyes.size(); j++) {
 		//Rect rect(faces[i].x + eyes[j].x, faces[i].y + eyes[j].y, eyes[j].width, eyes[j].height);
 		//rectangle(img, rect, colors[3], 2, 8, 0);
