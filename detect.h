@@ -52,6 +52,7 @@ public:
 	void showDetect();													//显示检测图像
 	vector<Rect> getFaces() { return faces; }
 	VideoCapture getCap() { return cap; }
+	vector<Rect> getEyes() { return eyes; }
 	float getBlinkper(float time) { return BlinkTims / time; }			//获得眨眼频率
 	int getBlink() { return BlinkTims; }								//获得眨眼次数
 	void setBlink(int temp) { BlinkTims = temp; }

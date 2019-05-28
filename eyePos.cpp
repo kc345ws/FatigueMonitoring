@@ -300,7 +300,7 @@ int EyePos::getEyeState(double MinEyeballRectShape, double MinEyeballBlackPixelR
 	// 判定眼睛矩形区域的长宽比的模糊级别
 	shapeFuzzyLv = 0;
 	//如果长宽比过大 则视为眼睛已经闭上
-	if ((MinEyeballRectShape >= 0) && (MinEyeballRectShape <= 0.8)) {
+	/*if ((MinEyeballRectShape >= 0) && (MinEyeballRectShape <= 0.8)) {
 		shapeFuzzyLv = 0;
 	}
 	else if (MinEyeballRectShape <= 1.2) {
@@ -314,6 +314,25 @@ int EyePos::getEyeState(double MinEyeballRectShape, double MinEyeballBlackPixelR
 	}
 	else if (MinEyeballRectShape <= 3) {
 		shapeFuzzyLv = 6;
+	}
+	else {
+		shapeFuzzyLv = 0;
+	}*/
+
+	if ((MinEyeballRectShape >= 0) && (MinEyeballRectShape <= 0.8)) {
+		shapeFuzzyLv = 8;
+	}
+	else if (MinEyeballRectShape <= 1.2) {
+		shapeFuzzyLv = 6;
+	}
+	else if (MinEyeballRectShape <= 1.5) {
+		shapeFuzzyLv = 4;
+	}
+	else if (MinEyeballRectShape <= 2.5) {
+		shapeFuzzyLv = 2;
+	}
+	else if (MinEyeballRectShape <= 3) {
+		shapeFuzzyLv = 0;
 	}
 	else {
 		shapeFuzzyLv = 0;
@@ -353,9 +372,61 @@ int EyePos::getEyeState(double MinEyeballRectShape, double MinEyeballBlackPixelR
 	eyeState = 1;		// 默认是闭眼的
 	funcResult = 2 * shapeFuzzyLv + 4 * pixelFuzzyLv + 4 * betaFuzzyLv;
 
-	if (funcResult >= 44) {//如果模糊评价结果大于58则没有闭眼
+	if (funcResult >= 42) {//如果模糊评价结果大于40则没闭眼
 		eyeState = 0;
 	}
-
 	return eyeState;
+}
+
+int EyePos::removeEyeglasses(int* vertProject, int width, int height, int threshold)
+{
+	int temp, temp1, count, flag, i;
+	int eyeRow;
+	int eyeBrowThreshold;
+
+	// 定位人眼位置
+	eyeBrowThreshold = (width - threshold) * 255;// 为了防止无法区分眼睛和眼镜的情况，可适当降低阈值
+
+	// 消除眼镜区域
+	temp = 100000000;
+	temp1 = 0;
+	count = 0;
+	flag = 0;										// 表示当前搜索的位置在第一个最低谷之前
+	eyeRow = 0;
+	for (i = 0; i < width; i = i + 3) {
+		count++;
+		// 相当于递推滤波
+		temp1 = *(vertProject + i) + *(vertProject + i + 1) + *(vertProject + i + 2);
+		if ((temp1 < temp) & (flag == 0)) {
+			temp = temp1;
+			eyeRow = i;
+			count = 0;
+		}
+		if (count >= 3 || i >= width - 2) {
+			flag = 1;
+			break;
+		}
+	}
+
+	// 搜索第一个大于眼睛与眼镜分割阈值的点
+	count = 0;
+	for (i = eyeRow; i < width; i++) {
+		if (*(vertProject + i) > eyeBrowThreshold) {
+			eyeRow = i;
+			count++;
+			if (count >= 3) {				// count: 统计共有多少连续的列的投影值大于阈值；
+				eyeRow = i;
+				break;
+			}
+		}
+		else
+			count = 0;
+	}
+
+	// 防止没有眉毛错删眼睛的情况，根据实验结果调整参数
+	if (eyeRow >= width / 1.5) {
+		eyeRow = 0;
+	}
+
+	return eyeRow;
 }

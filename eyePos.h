@@ -17,6 +17,7 @@
 using namespace cv;
 class EyePos {
 private:
+	//Point* point = new Point();
 	typedef struct
 	{
 		int data;
@@ -29,11 +30,12 @@ public:
 		return (*(projectArr*)a).data - (*(projectArr*)b).data;
 	}
 	int getEyePos(int* project, int size, int region);
-	int removeEyebrow(int* horiProject, int width, int height, int threshold);
+	int removeEyebrow(int* horiProject, int width, int height, int threshold);//È¥³ýÃ¼Ã«
 	void calEyeSocketRegion(Rect* eyeRect, int width, int height, int EyeCol, int EyeRow);
 	void getEyeMinRect(Rect* eyeRect, int* horiProject, int* vertProject, int width, int height, int horiThreshold = 5, int vertThreshold = 3);
 	double calMiddleAreaBlackPixRate(int* vertProject, Rect* eyeRect, int width, int height, int eyeCol, int MinEyeballBlackPixel);
-	int getEyeState(double MinEyeballRectShape, double MinEyeballBlackPixelRate, double MinEyeballBeta);
+	int getEyeState(double MinEyeballRectShape, double MinEyeballBlackPixelRate, double MinEyeballBeta); \
+	int removeEyeglasses(int* horiProject, int width, int height, int threshold);//È¥³ýÑÛ¾µ
 };
 #endif // !EYEPOS_H
 
