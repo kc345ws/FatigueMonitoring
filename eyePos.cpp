@@ -47,7 +47,9 @@ int EyePos::getEyePos(int* project, int size, int region)
 				return -1;
 		}
 	}
+
 	free(projectTemp);
+	free(projectStruct);
 	return pos;
 }
 

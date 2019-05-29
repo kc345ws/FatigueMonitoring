@@ -14,6 +14,6 @@ class Histogram {
 private:
 
 public:
-	Histogram(IplImage* img, int* hist);
+	Histogram(IplImage* img, int* hist);//计算图像的直方图
 };
 #endif // !HISTOGRAM_H

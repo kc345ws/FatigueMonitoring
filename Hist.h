@@ -20,6 +20,6 @@ private:
 public:
 	Hist(){}
 	Hist(IplImage* srcImg, int* horiProj, int* vertProj);
-	void histProject(IplImage* srcImg, int* horiProj, int* vertProj);
+	void histProject(IplImage* srcImg, int* horiProj, int* vertProj);//计算图像直方图在水平方向和垂直方向的投影
 };
 #endif // !HIST_H

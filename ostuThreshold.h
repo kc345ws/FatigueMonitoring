@@ -16,7 +16,7 @@ private:
 	int threshold;
 	int CON;
 public:
-	OstuThreshold(int* hist, int pixelSum, const int CONST);
+	OstuThreshold(int* hist, int pixelSum, const int CONST);//计算二值化阈值
 	int getostu() { return (threshold - CON); };
 };
 #endif // !ostuThreshold_h

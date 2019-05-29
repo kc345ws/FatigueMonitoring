@@ -25,6 +25,7 @@ private:
 	Mat gray;//灰度图
 	vector<Rect> faces;//脸部向量
 	vector<Rect>eyes;//眼部向量
+	vector<Rect>mouth;//嘴部向量
 	double scale_factor = 1.3;		// 搜索窗口的比例系数
 	int min_neighbors = 5;			// 构成检测目标的相邻矩形的最小个数
 	int flags = 0;					// 操作方式
@@ -42,6 +43,7 @@ private:
 	};
 	int BlinkTims = 0;													//眨眼次数
 	int BowTimes = 0;													//低头次数
+	int opMouth = 0;													//张嘴次数
 
 public:
 	Detect();
@@ -49,6 +51,8 @@ public:
 	bool checkisOpened();												//检测摄像头是否打开
 	void detectFace();													//检测脸部
 	void detectEyes(const int index);									//检测眼睛
+	void detectMouth(Mat grayimg, const int index);						//检测嘴部
+	void detectEyeswithoutHaar(const int index);						//使用先验知识检测眼部
 	void showDetect();													//显示检测图像
 	vector<Rect> getFaces() { return faces; }
 	VideoCapture getCap() { return cap; }
@@ -57,7 +61,9 @@ public:
 	int getBlink() { return BlinkTims; }								//获得眨眼次数
 	void setBlink(int temp) { BlinkTims = temp; }
 	int getBow() { return BowTimes; }
-	float getBowper(float time) { return BowTimes / time; }				//获得低头评率
+	float getBowper(float time) { return BowTimes / time; }				//获得低头频率
 	void setBow(int temp) { BowTimes = temp; }
+	void setImg(Mat Tempimg) { img = Tempimg; }
+	Mat getImg() { return img; }
 };
 #endif 

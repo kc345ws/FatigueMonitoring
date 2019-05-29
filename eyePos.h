@@ -29,13 +29,13 @@ public:
 	int cmpInc(const void* a, const void* b){
 		return (*(projectArr*)a).data - (*(projectArr*)b).data;
 	}
-	int getEyePos(int* project, int size, int region);
-	int removeEyebrow(int* horiProject, int width, int height, int threshold);//去除眉毛
-	void calEyeSocketRegion(Rect* eyeRect, int width, int height, int EyeCol, int EyeRow);
-	void getEyeMinRect(Rect* eyeRect, int* horiProject, int* vertProject, int width, int height, int horiThreshold = 5, int vertThreshold = 3);
-	double calMiddleAreaBlackPixRate(int* vertProject, Rect* eyeRect, int width, int height, int eyeCol, int MinEyeballBlackPixel);
-	int getEyeState(double MinEyeballRectShape, double MinEyeballBlackPixelRate, double MinEyeballBeta); \
-	int removeEyeglasses(int* horiProject, int width, int height, int threshold);//去除眼镜
+	int getEyePos(int* project, int size, int region);										//获得眼睛位置
+	int removeEyebrow(int* horiProject, int width, int height, int threshold);				//去除眉毛
+	void calEyeSocketRegion(Rect* eyeRect, int width, int height, int EyeCol, int EyeRow);	//获得眼眶大致位置
+	void getEyeMinRect(Rect* eyeRect, int* horiProject, int* vertProject, int width, int height, int horiThreshold = 5, int vertThreshold = 3);//获得眼眶的最小矩形区域
+	double calMiddleAreaBlackPixRate(int* vertProject, Rect* eyeRect, int width, int height, int eyeCol, int MinEyeballBlackPixel); //统计1 / 2区域内黑像素的比例
+	int getEyeState(double MinEyeballRectShape, double MinEyeballBlackPixelRate, double MinEyeballBeta); //获得眼睛闭合状态
+	int removeEyeglasses(int* horiProject, int width, int height, int threshold);			//去除眼镜
 };
 #endif // !EYEPOS_H
 

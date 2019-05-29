@@ -17,6 +17,7 @@ Hist::Hist(IplImage* srcImg, int* horiProj, int* vertProj)
 			*(vertProj + j) += *temp;	// 计算垂直方向的投影
 		}
 	}
+
 }
 
 void Hist::histProject(IplImage* srcImg, int* horiProj, int* vertProj) {
