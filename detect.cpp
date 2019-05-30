@@ -2,6 +2,7 @@
 #include<vector>
 #include"Trans.h"
 #include"histogram.h"
+#include"Hist.h"
 #include"ostuThreshold.h"
 
 using namespace std;
@@ -90,7 +91,7 @@ void Detect::detectMouth(Mat grayimg, const int index)//检测嘴部
 	float TempWidth = MyMouTh.width / 3;//将脸部分为3部分
 	MyMouTh.x = MyMouTh.x + TempWidth;//嘴部的起始X坐标
 	//MyMouTh.height / 3
-	MyMouTh.y = faces[index].y + faces[index].height*0.72;//嘴部起始Y坐标
+	MyMouTh.y = faces[index].y + faces[index].height*0.74;//嘴部起始Y坐标
 	//MyMouTh.width = MyMouTh.width - 3 * TempWidth / 2;
 	MyMouTh.width = TempWidth + faces[index].width * 0.1;//嘴部矩形宽度
 	MyMouTh.height = MyMouTh.height / 6 + faces[index].height * 0.001;//嘴部矩形高度
@@ -112,7 +113,7 @@ void Detect::detectMouth(Mat grayimg, const int index)//检测嘴部
 	// 计算最佳阈值
 	pixelSum = mouthImg->width * mouthImg->height;
 
-	OstuThreshold ostuThreshold(hist, pixelSum, 50);	//计算二值化的最佳阈值
+	OstuThreshold ostuThreshold(hist, pixelSum, 45);	//计算二值化的最佳阈值
 	threshold = ostuThreshold.getostu();
 	cvThreshold(mouthImg, mouthImg, threshold, 255, CV_THRESH_BINARY);// 对图像二值化
 	// 显示二值化后的图像
@@ -120,6 +121,14 @@ void Detect::detectMouth(Mat grayimg, const int index)//检测嘴部
 	cvDilate(mouthImg, mouthImg, NULL, 1);	//膨胀图像
 	cvShowImage("二值化后的嘴部", mouthImg);
 
+	if (getMouthstate(mouthImg, index, MyMouTh) == true && TempTimes == 0) {//如果张嘴了
+			opMouth++;
+			TempTimes = 1;
+	}
+	else{
+		TempTimes = 0;
+	}
+	
 	/*Mat Tempimg = cvarrToMat(mouthImg);
 	Mat TempMouth = Tempimg.clone();
 	vector<vector<Point>>contours;
@@ -234,4 +243,50 @@ void Detect::detectEyeswithoutHaar(const int index)
 void Detect::showDetect()
 {
 	imshow("疲劳驾驶检测", img);
+}
+
+bool Detect::getMouthstate(IplImage *srcImg ,const int index , Rect Mouth)
+{
+	int* subhoriProject;		//水平方向投影
+	int* subvertProject;		//垂直方向投影
+	int WIDTH = 0;
+	int HEIGHT = 0;
+	Hist histProject;
+	int whitepixe = 0;			//白色像素
+	int Blackpixe = 0;			//黑色像素
+	
+
+	WIDTH = Mouth.width;
+	HEIGHT = Mouth.height;
+
+	subhoriProject = (int*)malloc(HEIGHT * sizeof(int));
+	subvertProject = (int*)malloc(WIDTH * sizeof(int));
+	if (subhoriProject == NULL || subvertProject == NULL) {
+		cout << "分配内存失败" << endl;
+		cvWaitKey(0);
+		return -1;
+	}
+	// 内存置零
+	for (int i = 0; i < HEIGHT; i++) {
+		*(subhoriProject + i) = 0;
+	}
+	for (int i = 0; i < WIDTH; i++) {
+		*(subvertProject + i) = 0;
+	}
+	histProject.histProject(srcImg, subhoriProject, subvertProject);
+
+	for (int i = 0; i < WIDTH; i++) {
+		whitepixe += *(subvertProject + i);//统计白像素个数
+	}
+	whitepixe /= 256;
+	Blackpixe = WIDTH * HEIGHT - whitepixe;
+
+	if (Blackpixe > 0 && WIDTH > 90 && HEIGHT > 30) {
+		Blackpixe *= 10;
+		float value = (float)Blackpixe / (float)whitepixe;
+		if (value > 3) {//比值大于3
+			return true;
+		}
+	}
+	return false;
 }

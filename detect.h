@@ -44,6 +44,7 @@ private:
 	int BlinkTims = 0;													//眨眼次数
 	int BowTimes = 0;													//低头次数
 	int opMouth = 0;													//张嘴次数
+	int TempTimes = 0;													//临时次数
 
 public:
 	Detect();
@@ -65,5 +66,8 @@ public:
 	void setBow(int temp) { BowTimes = temp; }
 	void setImg(Mat Tempimg) { img = Tempimg; }
 	Mat getImg() { return img; }
+	bool getMouthstate(IplImage* srcImg, const int index, Rect rect);				//获得嘴部状态
+	int getopMouth() { return opMouth; }
+	int getopMouthper(float time) { return opMouth / time; }
 };
 #endif 

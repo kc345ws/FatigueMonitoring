@@ -1,3 +1,4 @@
+#include<Windows.h>
 #include<iostream>
 #include <opencv2/core/core.hpp>  
 #include <opencv2/highgui/highgui.hpp> 
@@ -14,11 +15,12 @@
 using namespace std;
 using namespace cv;
 
-#define DETECTTIME	30								// 一次检测过程的时间长度，用检测次数衡量
-#define FATIGUETHRESHOLD	180						// 判断是否疲劳驾驶的阈值
+#define DETECTTIME	30								//	一次检测过程的时长，大概10秒一次
+#define FATIGUETHRESHOLD	180						//	判断是否疲劳驾驶的阈值
+#define BLINKTHRESHOLD      120						//	眨眼阈值
 
 int main() {
-	
+
 	int failFaceNum = 0;							// 统计一次检测过程中未检测到人脸的总数
 	int failFaceDuration = 0;						// 统计一次检测过程中连续未检测到人脸的次数
 	int maxFailFaceDuration = 0;					// 一次检测过程中连续未检测到人脸的次数的最大值
@@ -71,8 +73,8 @@ int main() {
 	int TempBow = 0;								// 临时低头次数
 	int TempBlink = 0;								// 临时眨眼次数
 	int TempopMouth = 0;							//临时张嘴次数
-	
-	Detect *detect = new Detect();
+
+	Detect* detect = new Detect();
 	EyePos* eyepos = new EyePos();
 	Fatigue* recoFatigueState = new Fatigue(FATIGUETHRESHOLD, eyeCloseNum, maxEyeCloseDuration, failFaceNum, maxFailFaceDuration);
 	while (1) {
@@ -86,7 +88,7 @@ int main() {
 			detect->getCap() >> tempcapimg;
 			IplImage tempimg = tempcapimg;
 			srcImg = cvCloneImage(&tempimg);
-			
+
 
 			Mat tempgrayimg;
 			tempgrayimg.create(tempcapimg.size(), tempcapimg.type());
@@ -96,7 +98,7 @@ int main() {
 			cvCvtColor(srcImg, img, CV_BGR2GRAY);
 
 			/************************************* 检测人脸 ****************************************/
-			//cvWaitKey(20);
+			cvWaitKey(BLINKTHRESHOLD);
 			// 提取人脸区域
 			if ((detect->getFaces().size()) == 0) {
 				//int tempBow = detect->getBow();
@@ -126,7 +128,11 @@ int main() {
 					delete recoFatigueState;
 					if (fatigueState == 1) {
 						cout << "驾驶员处于疲劳驾驶状态" << endl << endl;
-						cout << "已进入疲劳状态无法统计眨眼和低头频率" << endl;
+						cout << "已进入疲劳状态无法统计眨眼和低头打呵欠频率" << endl;
+						for (int i = 0; i < 10; i++) {
+							cout << '\a' << endl;
+							Sleep(500);
+						}
 						//detect->setBlink(0);
 						//detect->setBow(0);
 
@@ -140,11 +146,12 @@ int main() {
 						cout << "驾驶员处于正常驾驶状态" << endl << endl;
 						cout << "眨眼频率:" << detect->getBlinkper(TIMETOTAL) << "次/10秒" << endl;
 						cout << "低头频率:" << detect->getBowper(TIMETOTAL) << "次/10秒" << endl;
+						cout << "打呵欠频率:" << detect->getopMouthper(TIMETOTAL) << "次/10秒" << endl;
 						//TempBow++;
 						detect->setBlink(0);
 						detect->setBow(0);
 					}
-					cvWaitKey(10);
+					//cvWaitKey(10);
 
 					// 进入下一次检测过程前，将变量清零
 					globalK = 0;
@@ -159,7 +166,7 @@ int main() {
 					maxFailFaceDuration = 0;
 					fatigueState = 1;
 
-					cvWaitKey(10);
+					//cvWaitKey(10);
 				}
 				continue;
 			}
@@ -212,7 +219,7 @@ int main() {
 				cvCopy(img, lEyeImg, NULL);
 				cvResetImageROI(img);	// 释放ROI
 
-				
+
 				//cvShowImage("大致的左眼区域", lEyeImg);
 				//waitKey(0);
 
@@ -224,7 +231,7 @@ int main() {
 				cvCopy(img, rEyeImg, NULL);
 				cvResetImageROI(img);								// 释放ROI
 
-				
+
 				//cvShowImage("大致的右眼区域", rEyeImg);
 				//waitKey(0);
 
@@ -241,13 +248,13 @@ int main() {
 				cvThreshold(lEyeImg, lEyeImg, threshold, 255, CV_THRESH_BINARY);// 对图像二值化
 				// 显示二值化后的图像
 				//cvShowImage("二值化后的左眼", lEyeImg);
-				
+
 
 				/*** 二值化右眼大致区域的图像 ***/
-				cvSmooth(rEyeImg, rEyeImg, CV_MEDIAN);		// 中值滤波 默认窗口大小为3*3
-				Trans RnonlineTrans(rEyeImg, rEyeImg, 0.8);	// 非线性点运算
-				memset(hist, 0, sizeof(hist));				// 初始化直方图的数组为0
-				Histogram Rhistogram(rEyeImg, hist);		// 计算图片直方图
+				cvSmooth(rEyeImg, rEyeImg, CV_MEDIAN);				// 中值滤波 默认窗口大小为3*3
+				Trans RnonlineTrans(rEyeImg, rEyeImg, 0.8);			// 非线性点运算
+				memset(hist, 0, sizeof(hist));						// 初始化直方图的数组为0
+				Histogram Rhistogram(rEyeImg, hist);				// 计算图片直方图
 				// 计算最佳阈值
 				pixelSum = rEyeImg->width * rEyeImg->height;
 				OstuThreshold RostuThreshold(hist, pixelSum, 35);
@@ -305,7 +312,7 @@ int main() {
 				//Hist RhistProject(rEyeImg, horiProject, vertProject);							// 计算直方图投影
 				rEyeRow = eyepos->removeEyebrow(horiProject, WIDTH, HEIGHT, 10);				// 计算分割眉毛与眼框的位置
 				//eyepos->removeEyeglasses(vertProject, WIDTH, HEIGHT, 100);						// 去除眼镜
-				
+
 																								// 显示去除眉毛后的人眼大致区域
 				eyeRect = cvRect(0, lEyeRow, lEyeImg->width, (lEyeImg->height - lEyeRow));		// 去眉毛的眼眶区域在lEyeImg中的矩形框区域
 				cvSetImageROI(lEyeImg, eyeRect);												// 设置ROI为去除眉毛的眼眶，在下面释放ROI
@@ -321,9 +328,9 @@ int main() {
 				resulttemp = cvarrToMat(lEyeImgNoEyebrow);//浅拷贝
 				Mat result = resulttemp.clone();//深拷贝
 				Mat result1 = result.clone();
-				
-				findContours(result,contour,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);//寻找轮廓
-				vector<vector<Point>>::iterator iter  = contour.begin();
+
+				findContours(result, contour, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);//寻找轮廓
+				vector<vector<Point>>::iterator iter = contour.begin();
 				while (iter != contour.end()) {
 					if (iter->size() < 30) {//删除轮廓面积小于30的
 						iter = contour.erase(iter);
@@ -337,14 +344,14 @@ int main() {
 				IplImage* imgtmp = cvCloneImage(&tempimg);*/
 				//cvErode(lEyeImgNoEyebrow, imgtmp, NULL, 2);		//腐蚀图像  
 				//cvDilate(lEyeballImg, lEyeballImg, NULL, 2);	//膨胀图像
-				
+
 				Mat dst;
 				//absdiff(result1, result, dst);
 				//bitwise_not(result, dst);
 				bitwise_xor(result1, result, dst);
 				//imshow("result1", result1);
 				//imshow("result", result);
-				bitwise_not(dst,dst);
+				bitwise_not(dst, dst);
 				IplImage LIMGTEMP = dst;
 				lEyeImgNoEyebrow = cvCloneImage(&LIMGTEMP);
 				//imshow("去除轮廓", dst);
@@ -373,7 +380,7 @@ int main() {
 				Mat Rresult = Rresulttemp.clone();//深拷贝
 				Mat Rresult1 = Rresult.clone();
 
-				findContours(Rresult,Rcontour, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);//寻找轮廓
+				findContours(Rresult, Rcontour, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);//寻找轮廓
 				vector<vector<Point>>::iterator Riter = Rcontour.begin();
 				while (Riter != Rcontour.end()) {
 					if (Riter->size() < 20) {//删除轮廓面积小于30的
@@ -453,7 +460,7 @@ int main() {
 				//RhistProject(rEyeImgNoEyebrow, subhoriProject, subvertProject);	// 重新对分割出的右眼图像进行积分投影
 				rEyeRow = eyepos->getEyePos(subhoriProject, HEIGHT, HEIGHT / 5);	// 定位右眼所在的行
 				rEyeCol = eyepos->getEyePos(subvertProject, WIDTH, WIDTH / 5);	// 定位右眼所在的列
-				
+
 				// 标记眼睛的位置
 				cvCircle(lEyeImgNoEyebrow, cvPoint(lEyeCol, lEyeRow), 3, CV_RGB(0, 0, 255), 1, 8, 0);
 				cvCircle(rEyeImgNoEyebrow, cvPoint(rEyeCol, rEyeRow), 3, CV_RGB(0, 0, 255), 1, 8, 0);
@@ -471,9 +478,9 @@ int main() {
 				eyeRect = cvRect(0, 0, WIDTH, HEIGHT);
 				//Rect* tempRect = new Rect(0, 0, HEIGHT, WIDTH);
 				eyepos->calEyeSocketRegion(&eyeRect, WIDTH, HEIGHT, lEyeCol, lEyeRow);
-				
+
 				cvSetImageROI(lEyeImgNoEyebrow, eyeRect);		// 设置ROI为检测到眼眶区域
-				
+
 				//Mat MatlEyeballImg;
 				lEyeballImg = cvCreateImage(cvSize(lEyeImgNoEyebrow->width, lEyeImgNoEyebrow->height), IPL_DEPTH_8U, 1);
 				//cvCopy(lEyeImgNoEyebrow, lEyeballImg,NULL);
@@ -487,8 +494,8 @@ int main() {
 				// 计算大致眼眶的区域: eyeRectTemp
 				eyeRect = cvRect(0, 0, WIDTH, HEIGHT);
 				eyepos->calEyeSocketRegion(&eyeRect, WIDTH, HEIGHT, rEyeCol, rEyeRow);
-				
-				
+
+
 				cvSetImageROI(rEyeImgNoEyebrow, eyeRect);		// 设置ROI为检测到眼眶区域
 				rEyeballImg = cvCreateImage(cvSize(rEyeImgNoEyebrow->width, rEyeImgNoEyebrow->height), IPL_DEPTH_8U, 1);
 				//cvCopy(rEyeImgNoEyebrow, rEyeballImg, NULL);
@@ -534,8 +541,8 @@ int main() {
 				// 计算左眼最小的矩形区域
 				eyeRectTemp = cvRect(0, 0, 1, 1);		// 初始化
 				eyepos->getEyeMinRect(&eyeRectTemp, subhoriProject, subvertProject, WIDTH, HEIGHT, 5, 3);
-	
-				
+
+
 				// 计算最小左眼矩形的长宽比,  判断眼睛状态时用的到
 				lMinEyeballRectShape = (double)eyeRectTemp.width / (double)eyeRectTemp.height;
 				//printf("\nlMinEyeballRectShape: %f\n", lMinEyeballRectShape);
@@ -547,11 +554,11 @@ int main() {
 				cvResetImageROI(lEyeballImg);
 				//cvShowImage("左眼眶最小矩形区域", lMinEyeballImg);
 
-				
+
 				//cvShowImage("右眼球", rEyeballImg);
 
 				//cvWaitKey(0);
-				
+
 
 				////////////////////////  统计左眼黑像素个数  /////////////////////
 				HEIGHT = lMinEyeballImg->height;
@@ -577,6 +584,7 @@ int main() {
 				LhistProject.histProject(lMinEyeballImg, subhoriProject, subvertProject);
 				// 统计lEyeballImg中黑色像素的个数
 				temp = 0;	// 白像素个数
+
 				for (int i = 0; i < WIDTH; i++) {
 					temp += *(subvertProject + i);
 				}
@@ -588,7 +596,7 @@ int main() {
 				lMinEyeballBeta = 0;
 				lMinEyeballBeta = eyepos->calMiddleAreaBlackPixRate(subvertProject, &eyeRectTemp, WIDTH, HEIGHT, lEyeCol, lMinEyeballBlackPixel);
 
-				
+
 
 				////////////////////////////////////右眼
 				HEIGHT = rEyeballImg->height;
@@ -667,6 +675,10 @@ int main() {
 				if (lMinEyeballBlackPixel > 150) {
 					//lEyeState = eyepos->getEyeState(lMinEyeballRectShape, lMinEyeballBlackPixelRate, lMinEyeballBeta);
 					lEyeState = 0;
+
+					if (lMinEyeballBeta < 0.8 || lMinEyeballBeta > 2.2) {
+						cout << "注视方向发生了偏移" << endl;
+					}
 				}
 				else {//最小黑色像素总量小于50则直接视为闭眼了
 					lEyeState = 1;
@@ -680,13 +692,17 @@ int main() {
 				if (rMinEyeballBlackPixel > 150) {
 					//rEyeState = eyepos->getEyeState(rMinEyeballRectShape, rMinEyeballBlackPixelRate, rMinEyeballBeta);
 					rEyeState = 0;
+
+					if (rMinEyeballBeta < 0.8 || rMinEyeballBeta > 2.2) {
+						cout << "注视方向发生了偏移" << endl;
+					}
 				}
 				else {
 					rEyeState = 1;
 				}
 
 				if (detect->getEyes().size() > 0) {
-						rEyeState = 0;//如果Haar直接识别到了眼睛
+					rEyeState = 0;//如果Haar直接识别到了眼睛
 				}
 
 				(lEyeState + rEyeState) == 2 ? eyeState = 1 : eyeState = 0;//左右眼都闭合才算闭合
@@ -704,7 +720,7 @@ int main() {
 					if (TempBlink == 0) {
 						TempBlink++;
 					}
-					
+
 
 					if (globalK == DETECTTIME) {
 						// 检测过程中判断全是闭眼情况，没有睁眼和检测不到人脸的情况
@@ -723,103 +739,117 @@ int main() {
 						TempBlink = 0;
 					}
 				}
-		} // 承接判断是否检测到人脸的if语句
-		cvWaitKey(1);
-
-		cvReleaseImage(&lEyeImgNoEyebrow);
-		cvReleaseImage(&rEyeImgNoEyebrow);
-		cvReleaseImage(&lEyeballImg);
-		cvReleaseImage(&rEyeballImg);
-		cvReleaseImage(&lMinEyeballImg);
-		cvReleaseImage(&rMinEyeballImg);
-		free(horiProject);
-		free(vertProject);
-		free(subhoriProject);
-		free(subvertProject);
-		delete largestFaceRect;
-		cvReleaseImage(&srcImg);
-		cvReleaseImage(&img);
-		cvReleaseImage(&faceImg);
-		cvReleaseImage(&lEyeImg);
-		cvReleaseImage(&rEyeImg);
-		// 计时：执行一次循环的时间
-		stop = clock();
-		if (eyeState == 0) {
-			cout << "眼睛状态:睁"  << endl;
-		}
-		else {
-			cout << "眼睛状态:闭" << endl;
-		}
-
-		// 调整循环变量，进入下一次检测过程
-		if (globalK == DETECTTIME) {
-			//printf("eyeCloseNum: %d\tmaxEyeCloseDuration: %d\n", eyeCloseNum, maxEyeCloseDuration);
-			//printf("failFaceNum: %d\tmaxFailFaceDuration: %d\n", failFaceNum, maxFailFaceDuration);
-
-			// 进行疲劳状态的判别
-			//Fatigue isFatigue(FATIGUETHRESHOLD, eyeCloseNum, maxEyeCloseDuration, failFaceNum, maxFailFaceDuration);
-			//fatigueState = recoFatigueState(FATIGUETHRESHOLD, eyeCloseNum, maxEyeCloseDuration, failFaceNum, maxFailFaceDuration);
-
-			recoFatigueState = new Fatigue(FATIGUETHRESHOLD, eyeCloseNum, maxEyeCloseDuration, failFaceNum, maxFailFaceDuration);
-			fatigueState = recoFatigueState->getisTired(FATIGUETHRESHOLD);
-			delete recoFatigueState;
-			if (fatigueState == 1) {
-				cout << "驾驶员处于疲劳驾驶状态" << endl << endl;
-				cout << "已进入疲劳状态无法统计眨眼和低头频率" << endl;
-				//detect->setBlink(0);
-				//detect->setBow(0);
-
-				//cout << "眨眼频率:" << detect->getBlinkper(TIMETOTAL) << "次/10秒" << endl;
-				//cout << "低头频率:" << detect->getBowper(TIMETOTAL) << "次/10秒" << endl;
-				//TempBow++;
-				//detect->setBlink(0);
-				//detect->setBow(0);
+			} // 承接判断是否检测到人脸的if语句
+			// 计时：执行一次循环的时间
+			stop = clock();
+			if (eyeState == 0) {
+				cout << "眼睛状态:睁" << endl;
 			}
-			else if (fatigueState == 0) {
-				cout << "驾驶员处于正常驾驶状态" << endl << endl;
-				cout << "眨眼频率:" << detect->getBlinkper(TIMETOTAL) << "次/10秒" << endl;
-				cout << "低头频率:" << detect->getBowper(TIMETOTAL) << "次/10秒" << endl;
-				detect->setBlink(0);
-				detect->setBow(0);
+			else {
+				cout << "眼睛状态:闭" << endl;
 			}
-			// 进入下一次检测过程前，将变量清零
-			globalK = 0;
-			lEyeState = 1;
-			rEyeState = 1;
-			eyeState = 1;
-			eyeCloseNum = 0;
-			eyeCloseDuration = 0;
-			maxEyeCloseDuration = 0;
-			failFaceNum = 0;
-			failFaceDuration = 0;
-			maxFailFaceDuration = 0;
-			fatigueState = 1;
 
-			/*IplImage* lEyeImgNoEyebrow = NULL;				// 存储去除眉毛之后的左眼图像
-			IplImage* rEyeImgNoEyebrow = NULL;				// 存储去除眉毛之后的右眼图像
-			IplImage* lEyeballImg = NULL;					// 存储最终分割的左眼框的图像
-			IplImage* rEyeballImg = NULL;					// 存储最终分割的右眼框的图像
-			IplImage* lMinEyeballImg = NULL;				// 存储最终分割的最小的左眼框的图像
-			IplImage* rMinEyeballImg = NULL;				// 存储最终分割的最小的右眼框的图像
-			int* horiProject = NULL;						// 水平方向的投影结果(数组指针)
-			int* vertProject = NULL;						// 垂直方向的投影结果(数组指针)
-			int* subhoriProject = NULL;						// 水平方向的投影结果(数组指针)
-			int* subvertProject = NULL;						// 垂直方向的投影结果(数组指针)
-			int* horiProject = NULL;						// 水平方向的投影结果(数组指针)
-			int* vertProject = NULL;						// 垂直方向的投影结果(数组指针)
-			int* subhoriProject = NULL;						// 水平方向的投影结果(数组指针)
-			int* subvertProject = NULL;						// 垂直方向的投影结果(数组指针)
-			cv::Rect* largestFaceRect = nullptr;			// 存储检测到的最大的人脸矩形框
-			IplImage* srcImg = nullptr;						// 存放从摄像头读取的每一帧彩色源图像
-			IplImage* img = nullptr;						// 存放从摄像头读取的每一帧灰度源图像
-			IplImage* faceImg = nullptr;					// 存储检测出的人脸图像
-			clock_t start, stop;							// 计时参数
-			cv::Rect eyeRect;								// 存储裁剪后的人眼的矩形区域
-			cv::Rect eyeRectTemp;							// 临时矩形区域
-			IplImage* lEyeImg = nullptr;					// 存储左眼的图像
-			IplImage* rEyeImg = nullptr;					// 存储右眼的图像
-			*/
-			/*cvReleaseImage(&lEyeImgNoEyebrow);
+			// 调整循环变量，进入下一次检测过程
+			if (globalK == DETECTTIME) {
+				//printf("eyeCloseNum: %d\tmaxEyeCloseDuration: %d\n", eyeCloseNum, maxEyeCloseDuration);
+				//printf("failFaceNum: %d\tmaxFailFaceDuration: %d\n", failFaceNum, maxFailFaceDuration);
+
+				// 进行疲劳状态的判别
+				//Fatigue isFatigue(FATIGUETHRESHOLD, eyeCloseNum, maxEyeCloseDuration, failFaceNum, maxFailFaceDuration);
+				//fatigueState = recoFatigueState(FATIGUETHRESHOLD, eyeCloseNum, maxEyeCloseDuration, failFaceNum, maxFailFaceDuration);
+
+				recoFatigueState = new Fatigue(FATIGUETHRESHOLD, eyeCloseNum, maxEyeCloseDuration, failFaceNum, maxFailFaceDuration);
+				fatigueState = recoFatigueState->getisTired(FATIGUETHRESHOLD);
+				delete recoFatigueState;
+				if (fatigueState == 1) {
+					cout << "驾驶员处于疲劳驾驶状态" << endl << endl;
+					cout << "已进入疲劳状态无法统计眨眼和低头打呵欠频率" << endl;
+					for (int i = 0; i < 10; i++) {
+						cout << '\a' << endl;
+						Sleep(500);
+					}
+					//detect->setBlink(0);
+					//detect->setBow(0);
+
+					//cout << "眨眼频率:" << detect->getBlinkper(TIMETOTAL) << "次/10秒" << endl;
+					//cout << "低头频率:" << detect->getBowper(TIMETOTAL) << "次/10秒" << endl;
+					//TempBow++;
+					//detect->setBlink(0);
+					//detect->setBow(0);
+				}
+				else if (fatigueState == 0) {
+					cout << "驾驶员处于正常驾驶状态" << endl << endl;
+					cout << "眨眼频率:" << detect->getBlinkper(TIMETOTAL) << "次/10秒" << endl;
+					cout << "低头频率:" << detect->getBowper(TIMETOTAL) << "次/10秒" << endl;
+					cout << "打呵欠频率:" << detect->getopMouthper(TIMETOTAL) << "次/10秒" << endl;
+					detect->setBlink(0);
+					detect->setBow(0);
+				}
+				// 进入下一次检测过程前，将变量清零
+				globalK = 0;
+				lEyeState = 1;
+				rEyeState = 1;
+				eyeState = 1;
+				eyeCloseNum = 0;
+				eyeCloseDuration = 0;
+				maxEyeCloseDuration = 0;
+				failFaceNum = 0;
+				failFaceDuration = 0;
+				maxFailFaceDuration = 0;
+				fatigueState = 1;
+
+				/*IplImage* lEyeImgNoEyebrow = NULL;				// 存储去除眉毛之后的左眼图像
+				IplImage* rEyeImgNoEyebrow = NULL;				// 存储去除眉毛之后的右眼图像
+				IplImage* lEyeballImg = NULL;					// 存储最终分割的左眼框的图像
+				IplImage* rEyeballImg = NULL;					// 存储最终分割的右眼框的图像
+				IplImage* lMinEyeballImg = NULL;				// 存储最终分割的最小的左眼框的图像
+				IplImage* rMinEyeballImg = NULL;				// 存储最终分割的最小的右眼框的图像
+				int* horiProject = NULL;						// 水平方向的投影结果(数组指针)
+				int* vertProject = NULL;						// 垂直方向的投影结果(数组指针)
+				int* subhoriProject = NULL;						// 水平方向的投影结果(数组指针)
+				int* subvertProject = NULL;						// 垂直方向的投影结果(数组指针)
+				int* horiProject = NULL;						// 水平方向的投影结果(数组指针)
+				int* vertProject = NULL;						// 垂直方向的投影结果(数组指针)
+				int* subhoriProject = NULL;						// 水平方向的投影结果(数组指针)
+				int* subvertProject = NULL;						// 垂直方向的投影结果(数组指针)
+				cv::Rect* largestFaceRect = nullptr;			// 存储检测到的最大的人脸矩形框
+				IplImage* srcImg = nullptr;						// 存放从摄像头读取的每一帧彩色源图像
+				IplImage* img = nullptr;						// 存放从摄像头读取的每一帧灰度源图像
+				IplImage* faceImg = nullptr;					// 存储检测出的人脸图像
+				clock_t start, stop;							// 计时参数
+				cv::Rect eyeRect;								// 存储裁剪后的人眼的矩形区域
+				cv::Rect eyeRectTemp;							// 临时矩形区域
+				IplImage* lEyeImg = nullptr;					// 存储左眼的图像
+				IplImage* rEyeImg = nullptr;					// 存储右眼的图像
+				*/
+				/*cvReleaseImage(&lEyeImgNoEyebrow);
+				cvReleaseImage(&rEyeImgNoEyebrow);
+				cvReleaseImage(&lEyeballImg);
+				cvReleaseImage(&rEyeballImg);
+				cvReleaseImage(&lMinEyeballImg);
+				cvReleaseImage(&rMinEyeballImg);
+				free(horiProject);
+				free(vertProject);
+				free(subhoriProject);
+				free(subvertProject);
+				free(largestFaceRect);
+				cvReleaseImage(&srcImg);
+				cvReleaseImage(&img);
+				cvReleaseImage(&faceImg);
+				cvReleaseImage(&lEyeImg);
+				cvReleaseImage(&rEyeImg);*/
+
+				/*char c = cvWaitKey(1);
+				if (c == 27)
+					break;
+				else
+					continue;
+				}*/
+			}
+
+			//cvWaitKey(10);
+
+			cvReleaseImage(&lEyeImgNoEyebrow);
 			cvReleaseImage(&rEyeImgNoEyebrow);
 			cvReleaseImage(&lEyeballImg);
 			cvReleaseImage(&rEyeballImg);
@@ -829,21 +859,14 @@ int main() {
 			free(vertProject);
 			free(subhoriProject);
 			free(subvertProject);
-			free(largestFaceRect);
+			delete largestFaceRect;
 			cvReleaseImage(&srcImg);
 			cvReleaseImage(&img);
 			cvReleaseImage(&faceImg);
 			cvReleaseImage(&lEyeImg);
-			cvReleaseImage(&rEyeImg);*/
-
-			char c = cvWaitKey(1);
-			if (c == 27)
-				break;
-			else
-				continue;
-			}
+			cvReleaseImage(&rEyeImg);
 		}
+		return 0;
 	}
-	return 0;
 }
 
